@@ -1,0 +1,48 @@
+name: Daily Project Update
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "17 20 * * 1-5"
+      timezone: "Europe/Berlin"
+
+permissions:
+  contents: write
+
+jobs:
+  update-project:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Update activity log
+        run: |
+          TODAY=$(TZ=Europe/Berlin date '+%Y-%m-%d')
+
+          mkdir -p logs
+          touch logs/activity.md
+
+          if grep -q "$TODAY" logs/activity.md; then
+            echo "An entry already exists for $TODAY."
+            exit 0
+          fi
+
+          echo "- $TODAY — Automated Project-X maintenance." >> logs/activity.md
+
+      - name: Commit and push update
+        run: |
+          git config user.name "RoshFps"
+          git config user.email "127776931+RoshFps@users.noreply.github.com"
+
+          git add logs/activity.md
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: update Project-X activity log"
+          git push
